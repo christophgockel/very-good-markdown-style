@@ -1,6 +1,7 @@
 pub mod document;
 pub mod rule;
 pub mod rules;
+pub mod text;
 pub mod violation;
 
 pub use document::Document;
@@ -9,7 +10,10 @@ pub use violation::{Span, Violation};
 
 /// The built-in, opinionated rule set. Every rule is always on.
 pub fn default_rules() -> Vec<Box<dyn Rule>> {
-    vec![Box::new(rules::trailing_whitespace::TrailingWhitespace)]
+    vec![
+        Box::new(rules::trailing_whitespace::TrailingWhitespace),
+        Box::new(rules::final_newline::FinalNewline),
+    ]
 }
 
 /// Run every rule's detector against a document and collect the violations.

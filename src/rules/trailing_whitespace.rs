@@ -1,5 +1,6 @@
 use crate::document::Document;
 use crate::rule::Rule;
+use crate::text::split_lines;
 use crate::violation::{Span, Violation};
 
 /// Trailing whitespace is stripped, except a two-or-more space run before a
@@ -21,43 +22,6 @@ impl Rule for TrailingWhitespace {
     fn fix(&self, doc: &Document) -> Option<String> {
         Some(analyze(&doc.source).1)
     }
-}
-
-struct Line<'a> {
-    content: &'a str,
-    terminator: &'a str,
-}
-
-fn split_lines(source: &str) -> Vec<Line<'_>> {
-    let mut lines = Vec::new();
-    let mut rest = source;
-    loop {
-        match rest.find('\n') {
-            Some(idx) => {
-                let raw = &rest[..idx];
-                let (content, terminator) = match raw.strip_suffix('\r') {
-                    Some(without_cr) => (without_cr, "\r\n"),
-                    None => (raw, "\n"),
-                };
-                lines.push(Line {
-                    content,
-                    terminator,
-                });
-                rest = &rest[idx + 1..];
-                if rest.is_empty() {
-                    break;
-                }
-            }
-            None => {
-                lines.push(Line {
-                    content: rest,
-                    terminator: "",
-                });
-                break;
-            }
-        }
-    }
-    lines
 }
 
 /// Detect and fix in one pass so the two halves can never disagree.
