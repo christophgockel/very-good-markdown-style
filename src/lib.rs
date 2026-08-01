@@ -1,4 +1,6 @@
+pub mod ast;
 pub mod document;
+pub mod parser;
 pub mod rule;
 pub mod rules;
 pub mod text;
@@ -13,6 +15,7 @@ pub fn default_rules() -> Vec<Box<dyn Rule>> {
     vec![
         Box::new(rules::trailing_whitespace::TrailingWhitespace),
         Box::new(rules::final_newline::FinalNewline),
+        Box::new(rules::heading_increment::HeadingIncrement),
     ]
 }
 
