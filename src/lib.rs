@@ -17,6 +17,7 @@ pub fn default_rules() -> Vec<Box<dyn Rule>> {
         Box::new(rules::final_newline::FinalNewline),
         Box::new(rules::heading_increment::HeadingIncrement),
         Box::new(rules::heading_style::HeadingStyle),
+        Box::new(rules::atx_heading::AtxHeading),
     ]
 }
 
