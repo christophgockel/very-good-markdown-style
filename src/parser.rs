@@ -57,6 +57,7 @@ fn map<'a>(node: &'a AstNode<'a>) -> Option<Node> {
     Some(Node {
         kind,
         span,
+        start_column: sourcepos.start.column,
         children,
     })
 }

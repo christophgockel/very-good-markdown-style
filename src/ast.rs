@@ -42,6 +42,9 @@ pub enum NodeKind {
 pub struct Node {
     pub kind: NodeKind,
     pub span: LineSpan,
+    /// 1-based column where the node's content starts on its first line. For a
+    /// list item's paragraph this is the column after the marker.
+    pub start_column: usize,
     pub children: Vec<Node>,
 }
 

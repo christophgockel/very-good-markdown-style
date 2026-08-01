@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::ast::NodeKind;
+use crate::ast::{Node, NodeKind};
 use crate::document::Document;
 use crate::rule::Rule;
 use crate::sentence::split_sentences;
@@ -15,7 +15,10 @@ use crate::violation::{Span, Violation};
 /// boundary inside them cannot split them across lines. A boundary that would put
 /// a block marker at the start of a line is not taken, so nothing is corrupted.
 ///
-/// Scope is top-level and blockquote paragraphs; list items follow.
+/// Scope is prose: top-level paragraphs, blockquotes, and list items. A
+/// paragraph is only rewritten when its sentence structure actually changes, so
+/// trailing whitespace and marker spacing stay the concern of their own rules and
+/// lint never disagrees with format.
 pub struct SentencePerLine;
 
 const ID: &str = "sentence-per-line";
@@ -48,6 +51,16 @@ impl Rule for SentencePerLine {
     }
 }
 
+/// How a paragraph's lines are prefixed in the source.
+enum Prefix {
+    /// Top-level paragraph, no prefix.
+    Plain,
+    /// Inside blockquotes, at the given depth.
+    Quote(usize),
+    /// Inside a list item; the content starts at the given 1-based column.
+    List(usize),
+}
+
 /// Detect and fix in one pass so the two halves can never disagree.
 fn rewrite(doc: &Document) -> (Vec<Violation>, String) {
     let lines = split_lines(&doc.source);
@@ -57,20 +70,23 @@ fn rewrite(doc: &Document) -> (Vec<Violation>, String) {
         "\n"
     };
 
-    // Prose paragraphs (top-level or inside blockquotes), with their quote depth.
     let mut targets = Vec::new();
     collect(doc.tree(), 0, false, &mut targets);
 
     let mut replacements: HashMap<usize, (usize, String)> = HashMap::new();
     let mut violations = Vec::new();
-    for (start, end, depth) in targets {
+    for (start, end, prefix) in targets {
         let slice = &lines[start - 1..end];
-        let reformatted = reformat(slice, newline, depth);
-        // Only act when the sentence structure changes. Trailing whitespace and
-        // marker spacing belong to their own rules, so a paragraph that is
-        // already one-sentence-per-line is left byte-for-byte untouched, keeping
-        // lint and format in agreement.
-        if content_lines(&original(slice), depth) != content_lines(&reformatted, depth) {
+        let (first_prefix, cont_prefix, stripped) = strip(&prefix, slice);
+        let segments = produce(&stripped);
+
+        let before: Vec<String> = stripped
+            .iter()
+            .map(|line| line.trim().to_string())
+            .collect();
+        let after: Vec<String> = segments.iter().flatten().cloned().collect();
+
+        if before != after {
             violations.push(Violation {
                 rule_id: ID,
                 message: "put each sentence on its own line".to_string(),
@@ -80,7 +96,15 @@ fn rewrite(doc: &Document) -> (Vec<Violation>, String) {
                     length: 1,
                 },
             });
-            replacements.insert(start, (end, reformatted));
+            let last_terminator = slice[slice.len() - 1].terminator;
+            let emitted = emit(
+                &segments,
+                &first_prefix,
+                &cont_prefix,
+                newline,
+                last_terminator,
+            );
+            replacements.insert(start, (end, emitted));
         } else {
             replacements.insert(start, (end, original(slice)));
         }
@@ -103,19 +127,19 @@ fn rewrite(doc: &Document) -> (Vec<Violation>, String) {
     (violations, out)
 }
 
-/// Collect prose paragraphs to reflow, tracking blockquote depth. Paragraphs
-/// inside list items are skipped for now.
-fn collect(
-    node: &crate::ast::Node,
-    depth: usize,
-    in_item: bool,
-    out: &mut Vec<(usize, usize, usize)>,
-) {
+/// Collect prose paragraphs to reflow, tracking blockquote depth and list-item
+/// membership. Paragraphs nested in both a blockquote and a list item are skipped
+/// for now.
+fn collect(node: &Node, depth: usize, in_item: bool, out: &mut Vec<(usize, usize, Prefix)>) {
     match node.kind {
         NodeKind::Paragraph => {
-            if !in_item {
-                out.push((node.span.start, node.span.end, depth));
-            }
+            let prefix = match (in_item, depth) {
+                (false, 0) => Prefix::Plain,
+                (false, depth) => Prefix::Quote(depth),
+                (true, 0) => Prefix::List(node.start_column),
+                (true, _) => return,
+            };
+            out.push((node.span.start, node.span.end, prefix));
         }
         NodeKind::BlockQuote => {
             for child in &node.children {
@@ -142,14 +166,36 @@ fn original(slice: &[Line<'_>]) -> String {
         .collect()
 }
 
-/// The paragraph's text, one entry per line, stripped of its quote prefix and
-/// surrounding whitespace. Comparing these ignores prefix and trailing-space
-/// differences, so only real sentence-structure changes count.
-fn content_lines(text: &str, depth: usize) -> Vec<String> {
-    split_lines(text)
-        .iter()
-        .map(|line| strip_quote(line.content, depth).trim().to_string())
-        .collect()
+/// Return the prefix for the first emitted line, the prefix for continuation
+/// lines, and each source line stripped of its prefix.
+fn strip<'a>(prefix: &Prefix, slice: &'a [Line<'a>]) -> (String, String, Vec<&'a str>) {
+    match *prefix {
+        Prefix::Plain => (
+            String::new(),
+            String::new(),
+            slice.iter().map(|line| line.content).collect(),
+        ),
+        Prefix::Quote(depth) => {
+            let marker = "> ".repeat(depth);
+            let stripped = slice
+                .iter()
+                .map(|line| strip_quote(line.content, depth))
+                .collect();
+            (marker.clone(), marker, stripped)
+        }
+        Prefix::List(column) => {
+            let width = column.saturating_sub(1);
+            let first = slice[0].content;
+            let first_prefix: String = first.chars().take(width).collect();
+            let mut stripped = vec![&first[first_prefix.len()..]];
+            stripped.extend(
+                slice[1..]
+                    .iter()
+                    .map(|line| strip_indent(line.content, width)),
+            );
+            (first_prefix, " ".repeat(width), stripped)
+        }
+    }
 }
 
 /// Remove up to `depth` leading `>` markers (each with an optional space).
@@ -165,35 +211,62 @@ fn strip_quote(content: &str, depth: usize) -> &str {
     rest
 }
 
-fn reformat(slice: &[Line<'_>], newline: &str, depth: usize) -> String {
-    let last_terminator = slice[slice.len() - 1].terminator;
-    let prefix = "> ".repeat(depth);
-    let stripped: Vec<&str> = slice
-        .iter()
-        .map(|line| strip_quote(line.content, depth))
-        .collect();
-    let segments = segment_on_hard_breaks(&stripped);
+/// Remove up to `width` leading spaces.
+fn strip_indent(content: &str, width: usize) -> &str {
+    let mut removed = 0;
+    let mut offset = 0;
+    for (index, c) in content.char_indices() {
+        if removed < width && c == ' ' {
+            removed += 1;
+            offset = index + 1;
+        } else {
+            break;
+        }
+    }
+    &content[offset..]
+}
 
+/// Split each hard-break segment into sentences. Returns one list of sentences
+/// per segment so emission can restore the hard breaks between them.
+fn produce(stripped: &[&str]) -> Vec<Vec<String>> {
+    segment_on_hard_breaks(stripped)
+        .iter()
+        .map(|segment| {
+            let joined = segment
+                .iter()
+                .map(|content| content.trim())
+                .filter(|content| !content.is_empty())
+                .collect::<Vec<_>>()
+                .join(" ");
+            let (masked, protected) = mask(&joined);
+            let sentences: Vec<String> = split_sentences(&masked)
+                .into_iter()
+                .map(|sentence| restore(&sentence, &protected))
+                .filter(|sentence| !sentence.is_empty())
+                .collect();
+            merge_block_marker_starts(sentences)
+        })
+        .collect()
+}
+
+fn emit(
+    segments: &[Vec<String>],
+    first_prefix: &str,
+    cont_prefix: &str,
+    newline: &str,
+    last_terminator: &str,
+) -> String {
     let mut out_lines: Vec<String> = Vec::new();
     let segment_count = segments.len();
-    for (segment_index, segment) in segments.iter().enumerate() {
-        let joined = segment
-            .iter()
-            .map(|content| content.trim())
-            .filter(|content| !content.is_empty())
-            .collect::<Vec<_>>()
-            .join(" ");
-
-        let (masked, protected) = mask(&joined);
-        let sentences: Vec<String> = split_sentences(&masked)
-            .into_iter()
-            .map(|sentence| restore(&sentence, &protected))
-            .collect();
-        let sentences = merge_block_marker_starts(sentences);
-
+    for (segment_index, sentences) in segments.iter().enumerate() {
         let is_last_segment = segment_index + 1 == segment_count;
         let last_sentence = sentences.len().saturating_sub(1);
-        for (sentence_index, sentence) in sentences.into_iter().enumerate() {
+        for (sentence_index, sentence) in sentences.iter().enumerate() {
+            let prefix = if out_lines.is_empty() {
+                first_prefix
+            } else {
+                cont_prefix
+            };
             let mut line = format!("{prefix}{sentence}");
             if !is_last_segment && sentence_index == last_sentence {
                 line.push_str("  ");
@@ -501,7 +574,6 @@ mod tests {
 
     #[test]
     fn does_not_flag_blockquote_marker_spacing_alone() {
-        // Marker spacing is another rule's concern; structure is already correct.
         let source = ">  Hello world.\n";
         assert_eq!(fix(source), source);
         assert!(detect(source).is_empty());
@@ -515,8 +587,27 @@ mod tests {
     }
 
     #[test]
-    fn leaves_list_items_untouched_for_now() {
-        let source = "- One. Two.\n";
+    fn splits_a_bulleted_list_item() {
+        assert_eq!(fix("- One. Two.\n"), "- One.\n  Two.\n");
+        assert_eq!(detect("- One. Two.\n").len(), 1);
+    }
+
+    #[test]
+    fn splits_an_ordered_list_item_aligning_continuations() {
+        assert_eq!(fix("1. One. Two.\n"), "1. One.\n   Two.\n");
+    }
+
+    #[test]
+    fn joins_a_soft_wrapped_list_item() {
+        assert_eq!(
+            fix("- One two\n  three. Four.\n"),
+            "- One two three.\n  Four.\n"
+        );
+    }
+
+    #[test]
+    fn leaves_a_well_formed_list_item_alone() {
+        let source = "- Hello world.\n";
         assert_eq!(fix(source), source);
         assert!(detect(source).is_empty());
     }
