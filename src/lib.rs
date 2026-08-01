@@ -5,6 +5,7 @@ pub mod parser;
 pub mod report;
 pub mod rule;
 pub mod rules;
+pub mod sentence;
 pub mod text;
 pub mod violation;
 
