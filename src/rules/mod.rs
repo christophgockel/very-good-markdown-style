@@ -1,4 +1,5 @@
 pub mod atx_heading;
+pub mod block_spacing;
 pub mod final_newline;
 pub mod heading_increment;
 pub mod heading_style;
