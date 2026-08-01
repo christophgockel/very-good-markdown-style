@@ -2,6 +2,7 @@ pub mod atx_heading;
 pub mod block_spacing;
 pub mod code_fence;
 pub mod final_newline;
+pub mod hard_tabs;
 pub mod heading_increment;
 pub mod heading_style;
 pub mod sentence_per_line;

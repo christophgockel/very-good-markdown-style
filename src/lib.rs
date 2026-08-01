@@ -17,6 +17,7 @@ pub use violation::{Span, Violation};
 pub fn default_rules() -> Vec<Box<dyn Rule>> {
     vec![
         Box::new(rules::trailing_whitespace::TrailingWhitespace),
+        Box::new(rules::hard_tabs::HardTabs),
         Box::new(rules::final_newline::FinalNewline),
         Box::new(rules::heading_increment::HeadingIncrement),
         Box::new(rules::heading_style::HeadingStyle),
