@@ -15,6 +15,18 @@ impl Rule for TrailingWhitespace {
         ID
     }
 
+    fn short_reason(&self) -> &'static str {
+        "Trailing whitespace is invisible but shows up as diff noise."
+    }
+
+    fn rationale(&self) -> &'static str {
+        "Trailing spaces and tabs are invisible in most editors but appear in \
+         diffs and version control, adding noise that hides real changes. They \
+         are stripped everywhere, except a run of two or more spaces before a \
+         line with text, which Markdown treats as an intentional hard line \
+         break and which is normalised to exactly two spaces."
+    }
+
     fn detect(&self, doc: &Document) -> Vec<Violation> {
         analyze(&doc.source).0
     }

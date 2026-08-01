@@ -18,6 +18,16 @@ impl Rule for AtxHeading {
         ID
     }
 
+    fn short_reason(&self) -> &'static str {
+        "Headings use one space after the marker and no closing #s."
+    }
+
+    fn rationale(&self) -> &'static str {
+        "A single space after the # marker and no trailing run of #s is the \
+         plain, canonical ATX form. Closing hashes and extra spaces are \
+         decorative, vary between authors, and add nothing the renderer uses."
+    }
+
     fn detect(&self, doc: &Document) -> Vec<Violation> {
         convert(doc).0
     }

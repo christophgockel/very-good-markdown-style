@@ -16,6 +16,17 @@ impl Rule for FinalNewline {
         ID
     }
 
+    fn short_reason(&self) -> &'static str {
+        "Files should end with exactly one newline."
+    }
+
+    fn rationale(&self) -> &'static str {
+        "A single trailing newline is the POSIX convention: many tools expect \
+         it, and its absence shows up as a 'no newline at end of file' marker in \
+         diffs. Extra blank lines at the end carry no meaning, so the file is \
+         trimmed to exactly one final newline."
+    }
+
     fn detect(&self, doc: &Document) -> Vec<Violation> {
         let fixed = fixed_source(&doc.source);
         if fixed == doc.source {

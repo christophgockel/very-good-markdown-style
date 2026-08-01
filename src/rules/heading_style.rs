@@ -16,6 +16,17 @@ impl Rule for HeadingStyle {
         ID
     }
 
+    fn short_reason(&self) -> &'static str {
+        "Use ATX headings (# Heading), not setext underlines."
+    }
+
+    fn rationale(&self) -> &'static str {
+        "ATX headings state their level explicitly on the same line and work for \
+         all six levels, while setext underlines only reach two and put the level \
+         on a separate line. One style throughout keeps headings consistent and \
+         easy to scan."
+    }
+
     fn detect(&self, doc: &Document) -> Vec<Violation> {
         convert(doc).0
     }

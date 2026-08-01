@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod document;
 pub mod parser;
+pub mod report;
 pub mod rule;
 pub mod rules;
 pub mod text;

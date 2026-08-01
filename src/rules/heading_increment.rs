@@ -15,6 +15,18 @@ impl Rule for HeadingIncrement {
         ID
     }
 
+    fn short_reason(&self) -> &'static str {
+        "Heading levels should increase one at a time."
+    }
+
+    fn rationale(&self) -> &'static str {
+        "Skipping a heading level, for example jumping from # straight to ###, \
+         breaks the document outline that screen readers and tables of contents \
+         rely on. Increase depth one level at a time. This is reported but never \
+         fixed automatically, because only you know which level a heading was \
+         meant to be."
+    }
+
     fn detect(&self, doc: &Document) -> Vec<Violation> {
         let mut headings = Vec::new();
         doc.tree().walk(&mut |node| {
