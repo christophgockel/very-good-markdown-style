@@ -21,6 +21,7 @@ pub fn default_rules() -> Vec<Box<dyn Rule>> {
         Box::new(rules::heading_style::HeadingStyle),
         Box::new(rules::atx_heading::AtxHeading),
         Box::new(rules::block_spacing::BlockSpacing),
+        Box::new(rules::code_fence::CodeFence),
         Box::new(rules::single_h1::SingleH1),
     ]
 }
