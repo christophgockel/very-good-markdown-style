@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod cli;
 pub mod document;
 pub mod parser;
 pub mod report;
