@@ -26,6 +26,22 @@ pub fn lint(doc: &Document, rules: &[Box<dyn Rule>]) -> Vec<Violation> {
     rules.iter().flat_map(|rule| rule.detect(doc)).collect()
 }
 
+/// Apply every rule's fixer in order, each seeing the previous fixer's output.
+///
+/// A fresh `Document` per rule means each fixer parses the current source, so
+/// structural fixers work against up-to-date structure. Detect-only rules
+/// return no fix and are skipped. The result is idempotent: formatting it again
+/// changes nothing.
+pub fn format(source: &str, rules: &[Box<dyn Rule>]) -> String {
+    let mut current = source.to_string();
+    for rule in rules {
+        if let Some(fixed) = rule.fix(&Document::new(&current)) {
+            current = fixed;
+        }
+    }
+    current
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -36,5 +52,28 @@ mod tests {
         let violations = lint(&doc, &default_rules());
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].rule_id, "trailing-whitespace");
+    }
+
+    #[test]
+    fn format_applies_several_fixers_together() {
+        let source = "Title\n=====\n\nHello   world  \n\n\n";
+        assert_eq!(
+            format(source, &default_rules()),
+            "# Title\n\nHello   world\n"
+        );
+    }
+
+    #[test]
+    fn format_leaves_a_clean_document_untouched() {
+        let clean = "# Title\n\nHello world\n";
+        assert_eq!(format(clean, &default_rules()), clean);
+    }
+
+    #[test]
+    fn format_is_idempotent() {
+        let source = "Title\n=====\n\nHello   world  \n\n\n";
+        let once = format(source, &default_rules());
+        let twice = format(&once, &default_rules());
+        assert_eq!(once, twice);
     }
 }
