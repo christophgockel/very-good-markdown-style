@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "cargo fmt" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if git status --porcelain -- '*.rs' | grep -q .; then cargo clippy --all-targets -- -D warnings && cargo test --quiet; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
