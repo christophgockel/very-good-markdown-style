@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-02
+
 ### Fixed
 
 - Sentence-per-line no longer merges a sentence that begins with inline code, a link, or an autolink into the preceding sentence.
@@ -39,5 +41,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Idempotent formatting, so running `format` twice makes no further changes.
 - `rules --markdown` generates the rule catalogue in `docs/rules.md`, kept current by a test.
 
+[0.2.1]: https://github.com/christophgockel/very-good-markdown-style/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/christophgockel/very-good-markdown-style/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/christophgockel/very-good-markdown-style/releases/tag/0.1.0
