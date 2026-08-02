@@ -18,6 +18,10 @@ impl Rule for CodeFence {
         ID
     }
 
+    fn kind(&self) -> crate::rule::RuleKind {
+        crate::rule::RuleKind::Both
+    }
+
     fn short_reason(&self) -> &'static str {
         "Use backtick code fences, not tildes or indentation."
     }

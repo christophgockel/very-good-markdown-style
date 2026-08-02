@@ -14,6 +14,10 @@ impl Rule for SingleH1 {
         ID
     }
 
+    fn kind(&self) -> crate::rule::RuleKind {
+        crate::rule::RuleKind::Flag
+    }
+
     fn short_reason(&self) -> &'static str {
         "Use a single top-level heading per document."
     }

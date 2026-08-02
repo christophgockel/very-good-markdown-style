@@ -15,6 +15,10 @@ impl Rule for HeadingIncrement {
         ID
     }
 
+    fn kind(&self) -> crate::rule::RuleKind {
+        crate::rule::RuleKind::Flag
+    }
+
     fn short_reason(&self) -> &'static str {
         "Heading levels should increase one at a time."
     }

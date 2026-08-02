@@ -43,6 +43,8 @@ enum Command {
         /// The rule id, for example `sentence-per-line`.
         rule_id: String,
     },
+    /// List every rule with its kind and one-line reason.
+    Rules,
 }
 
 /// Parse arguments and run. Returns the process exit code.
@@ -51,6 +53,7 @@ pub fn run() -> ExitCode {
         Command::Lint { paths } => run_lint(&paths),
         Command::Format { paths } => run_format(&paths),
         Command::Explain { rule_id } => run_explain(&rule_id),
+        Command::Rules => run_rules(),
     }
 }
 
@@ -110,6 +113,21 @@ fn run_explain(rule_id: &str) -> ExitCode {
         }
         None => fail(&format!("unknown rule: {rule_id}")),
     }
+}
+
+fn run_rules() -> ExitCode {
+    let rules = default_rules();
+    let id_width = rules.iter().map(|rule| rule.id().len()).max().unwrap_or(0);
+    for rule in &rules {
+        println!(
+            "{:<id_width$}  {:<8}  {}",
+            rule.id(),
+            rule.kind().label(),
+            rule.short_reason(),
+        );
+    }
+    println!("\nRun `markdown-style explain <rule>` for the full reasoning.");
+    ExitCode::SUCCESS
 }
 
 enum Target {

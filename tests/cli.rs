@@ -99,6 +99,19 @@ fn explain_prints_a_rule_rationale() {
 }
 
 #[test]
+fn rules_lists_every_rule_with_its_kind() {
+    let output = Command::new(BIN).arg("rules").output().unwrap();
+
+    assert_eq!(output.status.code(), Some(0));
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains("sentence-per-line"));
+    assert!(stdout.contains("heading-increment"));
+    // Kinds are labelled: sentence-per-line fixes, heading-increment flags.
+    assert!(stdout.contains("flag"));
+    assert!(stdout.contains("fix+flag"));
+}
+
+#[test]
 fn a_missing_path_is_an_operational_error() {
     let output = Command::new(BIN)
         .arg("lint")
