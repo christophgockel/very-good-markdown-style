@@ -39,7 +39,7 @@ pub fn render(
             path,
             &lines,
             violation,
-            reasons.get(violation.rule_id).copied().unwrap_or(("", "")),
+            reasons.get(violation.rule_id).copied().unwrap_or(""),
             explained.insert(violation.rule_id),
             color,
         );
@@ -95,10 +95,10 @@ fn doc_kind(kind: RuleKind) -> &'static str {
     }
 }
 
-fn reason_index(rules: &[Box<dyn Rule>]) -> HashMap<&str, (&str, &str)> {
+fn reason_index(rules: &[Box<dyn Rule>]) -> HashMap<&str, &str> {
     rules
         .iter()
-        .map(|rule| (rule.id(), (rule.short_reason(), rule.rationale())))
+        .map(|rule| (rule.id(), rule.rationale()))
         .collect()
 }
 
@@ -107,13 +107,12 @@ fn render_one(
     path: &str,
     lines: &[crate::text::Line<'_>],
     violation: &Violation,
-    reason: (&str, &str),
+    rationale: &str,
     show_rationale: bool,
     color: bool,
 ) {
     let span = &violation.span;
     let gutter = " ".repeat(span.line.to_string().len());
-    let (short_reason, rationale) = reason;
 
     let heading = format!("{}: {}", violation.rule_id, violation.message);
     out.push_str(&paint(&heading, &format!("{BOLD}{RED}"), color));
@@ -135,16 +134,9 @@ fn render_one(
         paint(&carets, RED, color)
     ));
 
-    if !short_reason.is_empty() {
-        out.push_str(&format!("{gutter} = why: {short_reason}\n"));
-    }
     if show_rationale && !rationale.is_empty() {
         for (index, line) in rationale.lines().enumerate() {
-            let label = if index == 0 {
-                " = help: "
-            } else {
-                "          "
-            };
+            let label = if index == 0 { " = why: " } else { "        " };
             out.push_str(&format!("{gutter}{label}{}\n", line.trim()));
         }
     }
@@ -204,19 +196,19 @@ mod tests {
         // carets sit under them starting at the flagged column. `line3` keeps the
         // trailing spaces off the end of a physical source line here.
         let line3 = "text   ";
-        let why = "Trailing whitespace is invisible but shows up as diff noise.";
         let expected = format!(
-            "trailing-whitespace: trailing whitespace\n --> a.md:3:5\n  |\n3 | {line3}\n  |     ^^^\n  = why: {why}\n"
+            "trailing-whitespace: trailing whitespace\n --> a.md:3:5\n  |\n3 | {line3}\n  |     ^^^\n  = why: Trailing spaces"
         );
         assert!(report.starts_with(&expected), "got:\n{report}");
     }
 
     #[test]
-    fn shows_the_full_rationale_only_once_per_rule() {
+    fn shows_the_why_only_once_per_rule() {
         let source = "text  \n\nmore  \n";
         let report = render("a.md", source, &detect(source), &default_rules(), false);
-        assert_eq!(report.matches("= help:").count(), 1);
-        assert_eq!(report.matches("= why:").count(), 2);
+        // Two violations of the same rule, but the reasoning is shown once.
+        assert_eq!(report.matches("= why:").count(), 1);
+        assert!(!report.contains("= help:"));
     }
 
     #[test]
