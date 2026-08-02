@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-02
+
 ### Added
 
 - `lint`, `format`, and `explain` commands, plus `rules` to list the rule set.
@@ -19,3 +21,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Exit codes `0` for clean, `1` for violations, and `2` for errors, with fail-fast on the first operational error.
 - Idempotent formatting, so running `format` twice makes no further changes.
 - `rules --markdown` generates the rule catalogue in `docs/rules.md`, kept current by a test.
+
+[0.1.0]: https://github.com/christophgockel/very-good-markdown-style/releases/tag/0.1.0
