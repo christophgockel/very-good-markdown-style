@@ -33,11 +33,21 @@ When it is unsure, it leaves the text joined rather than guess wrong, so a bad s
 
 ## Install
 
+With Homebrew, on Apple Silicon macOS:
+
+```sh
+brew tap christophgockel/tap
+brew trust christophgockel/tap
+brew install christophgockel/tap/markdown-style
+```
+
+`brew trust` is needed because Homebrew asks you to trust a third-party tap before it will load a formula from it.
+
+Or build from source with Cargo:
+
 ```sh
 cargo install --path .
 ```
-
-Or build it in place with `cargo build --release` and run `target/release/markdown-style`.
 
 
 ## Usage
