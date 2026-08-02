@@ -32,6 +32,10 @@ pub enum NodeKind {
     ThematicBreak,
     Table,
     HtmlBlock,
+    /// Inline emphasis (`*text*` or `_text_`).
+    Emphasis,
+    /// Inline strong emphasis (`**text**` or `__text__`).
+    Strong,
     /// A block kind we do not model specifically yet.
     Other,
 }
@@ -45,6 +49,8 @@ pub struct Node {
     /// 1-based column where the node's content starts on its first line. For a
     /// list item's paragraph this is the column after the marker.
     pub start_column: usize,
+    /// 1-based column of the node's last character on its last line.
+    pub end_column: usize,
     pub children: Vec<Node>,
 }
 

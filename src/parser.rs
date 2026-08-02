@@ -42,8 +42,10 @@ fn map<'a>(node: &'a AstNode<'a>) -> Option<Node> {
         NodeValue::ThematicBreak => NodeKind::ThematicBreak,
         NodeValue::Table(_) => NodeKind::Table,
         NodeValue::HtmlBlock(_) => NodeKind::HtmlBlock,
+        NodeValue::Emph => NodeKind::Emphasis,
+        NodeValue::Strong => NodeKind::Strong,
         value if value.block() => NodeKind::Other,
-        // Inline nodes carry no block structure we model yet.
+        // Other inline nodes carry no structure we model yet.
         _ => return None,
     };
 
@@ -58,6 +60,7 @@ fn map<'a>(node: &'a AstNode<'a>) -> Option<Node> {
         kind,
         span,
         start_column: sourcepos.start.column,
+        end_column: sourcepos.end.column,
         children,
     })
 }
@@ -108,12 +111,15 @@ mod tests {
     }
 
     #[test]
-    fn does_not_emit_nodes_for_inline_content() {
-        // A single paragraph of styled text is one block node, not one per span.
-        let paragraphs = kinds("This is *emphasised* and `code`.\n")
-            .iter()
-            .filter(|kind| **kind == NodeKind::Paragraph)
-            .count();
-        assert_eq!(paragraphs, 1);
+    fn emits_emphasis_but_not_plain_inline_text() {
+        // Emphasis is modelled; plain text and code spans are not.
+        let all = kinds("This is *emphasised* and `code`.\n");
+        assert_eq!(
+            all.iter()
+                .filter(|kind| **kind == NodeKind::Paragraph)
+                .count(),
+            1
+        );
+        assert!(all.contains(&NodeKind::Emphasis));
     }
 }
