@@ -1,7 +1,12 @@
 name: Release
 
-# Manual trigger for now, so the build can be verified before wiring it to tags.
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -21,8 +26,17 @@ jobs:
       - name: Package
         run: tar -C target/aarch64-apple-darwin/release -czf markdown-style-aarch64-apple-darwin.tar.gz markdown-style
 
-      - name: Upload
+      - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: markdown-style-aarch64-apple-darwin
           path: markdown-style-aarch64-apple-darwin.tar.gz
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          shasum -a 256 markdown-style-aarch64-apple-darwin.tar.gz
+          gh release upload "$TAG" markdown-style-aarch64-apple-darwin.tar.gz --clobber
