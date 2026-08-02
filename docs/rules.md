@@ -151,3 +151,14 @@ Use a single top-level heading per document.
 A document should have exactly one # heading, its title.
 Several top-level headings usually mean the file is really two documents, or that a heading should sit a level deeper.
 This is reported but never fixed, because only you know which it is.
+
+
+## continuation-indent
+
+_Flag._
+Indent continuation lines to reach the text they continue.
+
+When a paragraph continues onto another line inside a list item or blockquote, that line has to reach the text it continues, by indentation in a list or a `>` prefix in a quote.
+A line that falls short is silently folded into the block above it by Markdown's lazy-continuation rule, so it renders as part of an item it does not appear to belong to.
+Indent it to line up, or add a blank line to make it a separate block.
+This is reported but never fixed, because only you know which you meant.

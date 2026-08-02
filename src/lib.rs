@@ -32,6 +32,7 @@ pub fn default_rules() -> Vec<Box<dyn Rule>> {
         Box::new(rules::sentence_per_line::SentencePerLine),
         Box::new(rules::block_spacing::BlockSpacing),
         Box::new(rules::single_h1::SingleH1),
+        Box::new(rules::continuation_indent::ContinuationIndent),
     ]
 }
 

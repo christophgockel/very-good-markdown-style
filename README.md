@@ -108,7 +108,7 @@ Some rules _fix_ what they find, others only _flag_ it, because fixing them woul
 | --- | --- | --- |
 | `trailing-whitespace` | fix | Strip trailing whitespace, keep intentional hard breaks. |
 | `hard-tabs` | fix | Expand tabs to spaces outside code. |
-| `final-newline` | fix | End with exactly one newline. |
+| `final-newline` | fix | End with a newline and at most one trailing blank line. |
 | `block-spacing` | fix | Consistent blank lines around blocks and headings. |
 | `heading-increment` | flag | Heading levels increase one at a time. |
 | `heading-style` | fix | ATX headings, not setext underlines. |
@@ -120,6 +120,7 @@ Some rules _fix_ what they find, others only _flag_ it, because fixing them woul
 | `ordered-list` | fix | Number ordered items in sequence. |
 | `nested-indent` | fix | Align nested list items with their parent. |
 | `blockquote-marker` | fix | One space after `>`. |
+| `continuation-indent` | flag | Indent continuation lines to reach the text they continue. |
 | `emphasis` | fix | `_emphasis_` and `**strong**`. |
 | `sentence-per-line` | fix | Start each sentence on its own line. |
 

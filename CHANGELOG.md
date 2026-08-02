@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `continuation-indent` rule: flags a paragraph continuation line inside a list item or blockquote that is not indented (or `>`-prefixed) far enough to reach the text it continues, which Markdown would otherwise fold into the wrong block.
+
+
 ## [0.2.1] - 2026-08-02
 
 ### Fixed
