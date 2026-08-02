@@ -90,11 +90,7 @@ fn rewrite(doc: &Document) -> (Vec<Violation>, String) {
             violations.push(Violation {
                 rule_id: ID,
                 message: "put each sentence on its own line".to_string(),
-                span: Span {
-                    line: start,
-                    column: 1,
-                    length: 1,
-                },
+                span: boundary_span(slice, &stripped, start),
             });
             let last_terminator = slice[slice.len() - 1].terminator;
             let emitted = emit(
@@ -164,6 +160,45 @@ fn original(slice: &[Line<'_>]) -> String {
         .iter()
         .map(|line| format!("{}{}", line.content, line.terminator))
         .collect()
+}
+
+/// Point at the sentence that should move onto its own line, not the first
+/// sentence, which is already correct. That is the start of the second sentence
+/// on the first line that holds more than one. If none does (the paragraph only
+/// needs joining), point at the continuation line instead.
+fn boundary_span(slice: &[Line<'_>], stripped: &[&str], start: usize) -> Span {
+    for (offset, content) in stripped.iter().enumerate() {
+        let sentences: Vec<String> = produce(std::slice::from_ref(content))
+            .into_iter()
+            .flatten()
+            .collect();
+        if sentences.len() > 1 {
+            let original = slice[offset].content;
+            let column = original
+                .find(sentences[1].as_str())
+                .map_or(1, |byte| original[..byte].chars().count() + 1);
+            return Span {
+                line: start + offset,
+                column,
+                length: 1,
+            };
+        }
+    }
+
+    if slice.len() > 1 {
+        let indent = slice[1].content.chars().take_while(|c| *c == ' ').count();
+        return Span {
+            line: start + 1,
+            column: indent + 1,
+            length: 1,
+        };
+    }
+
+    Span {
+        line: start,
+        column: 1,
+        length: 1,
+    }
 }
 
 /// Return the prefix for the first emitted line, the prefix for continuation
@@ -492,6 +527,15 @@ mod tests {
     fn splits_a_multi_sentence_line() {
         assert_eq!(fix("One. Two.\n"), "One.\nTwo.\n");
         assert_eq!(detect("One. Two.\n").len(), 1);
+    }
+
+    #[test]
+    fn points_at_the_second_sentence_not_the_first() {
+        let violations = detect("First sentence. Second sentence.\n");
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].span.line, 1);
+        // "Second" begins at column 17, after "First sentence. ".
+        assert_eq!(violations[0].span.column, 17);
     }
 
     #[test]
