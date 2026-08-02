@@ -1,5 +1,6 @@
 pub mod atx_heading;
 pub mod block_spacing;
+pub mod blockquote_marker;
 pub mod code_fence;
 pub mod final_newline;
 pub mod hard_tabs;

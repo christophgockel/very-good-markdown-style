@@ -26,6 +26,7 @@ pub fn default_rules() -> Vec<Box<dyn Rule>> {
         Box::new(rules::list_marker::ListMarker),
         Box::new(rules::list_marker_space::ListMarkerSpace),
         Box::new(rules::ordered_list::OrderedList),
+        Box::new(rules::blockquote_marker::BlockquoteMarker),
         Box::new(rules::sentence_per_line::SentencePerLine),
         Box::new(rules::block_spacing::BlockSpacing),
         Box::new(rules::single_h1::SingleH1),
