@@ -2,7 +2,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::rule::Rule;
+use crate::rule::{Rule, RuleKind};
 use crate::text::split_lines;
 use crate::violation::Violation;
 
@@ -54,6 +54,45 @@ pub fn explain(rule_id: &str, rules: &[Box<dyn Rule>]) -> Option<String> {
         .iter()
         .find(|rule| rule.id() == rule_id)
         .map(|rule| format!("{rule_id}\n\n{}\n", rule.rationale()))
+}
+
+/// The full rule catalog as Markdown, generated from the registry so it cannot
+/// drift from the code. The result is run through the formatter, so it is always
+/// canonical and passes the tool's own rules. A test asserts `docs/rules.md`
+/// matches this, and it is regenerated with `markdown-style rules --markdown`.
+pub fn rules_catalog() -> String {
+    let rules = crate::default_rules();
+    let mut raw = String::new();
+    raw.push_str("# Rules\n\n");
+    raw.push_str(
+        "Every rule is always on. \
+         A rule either _fixes_ what it finds or only _flags_ it. \
+         A rule is flag-only when fixing it would mean guessing at your intent, \
+         so the tool reports it and leaves the change to you. \
+         This page is generated from the rules themselves, and the reasoning is \
+         the same text `markdown-style explain <rule>` prints.\n\n",
+    );
+
+    for rule in &rules {
+        raw.push_str(&format!("## {}\n\n", rule.id()));
+        raw.push_str(&format!(
+            "_{}._ {}\n\n",
+            doc_kind(rule.kind()),
+            rule.short_reason()
+        ));
+        raw.push_str(rule.rationale());
+        raw.push_str("\n\n");
+    }
+
+    crate::format(&raw, &rules)
+}
+
+fn doc_kind(kind: RuleKind) -> &'static str {
+    match kind {
+        RuleKind::Fix => "Fix",
+        RuleKind::Flag => "Flag",
+        RuleKind::Both => "Fix and flag",
+    }
 }
 
 fn reason_index(rules: &[Box<dyn Rule>]) -> HashMap<&str, (&str, &str)> {

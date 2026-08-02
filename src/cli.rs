@@ -44,7 +44,11 @@ enum Command {
         rule_id: String,
     },
     /// List every rule with its kind and one-line reason.
-    Rules,
+    Rules {
+        /// Emit the full catalog as Markdown, for docs/rules.md.
+        #[arg(long)]
+        markdown: bool,
+    },
 }
 
 /// Parse arguments and run. Returns the process exit code.
@@ -53,7 +57,7 @@ pub fn run() -> ExitCode {
         Command::Lint { paths } => run_lint(&paths),
         Command::Format { paths } => run_format(&paths),
         Command::Explain { rule_id } => run_explain(&rule_id),
-        Command::Rules => run_rules(),
+        Command::Rules { markdown } => run_rules(markdown),
     }
 }
 
@@ -115,7 +119,12 @@ fn run_explain(rule_id: &str) -> ExitCode {
     }
 }
 
-fn run_rules() -> ExitCode {
+fn run_rules(markdown: bool) -> ExitCode {
+    if markdown {
+        print!("{}", report::rules_catalog());
+        return ExitCode::SUCCESS;
+    }
+
     let rules = default_rules();
     let id_width = rules.iter().map(|rule| rule.id().len()).max().unwrap_or(0);
     for rule in &rules {
