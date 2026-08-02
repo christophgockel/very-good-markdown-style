@@ -34,6 +34,14 @@ After changing any Markdown, run `markdown-style format .` so it stays conforman
 Every user-facing change (a new, changed, or removed rule, or a change to CLI behaviour) gets an entry under `[Unreleased]` in `CHANGELOG.md`, using the Keep a Changelog headings (`Added`, `Changed`, `Fixed`, and so on).
 
 
+## Conventions
+
+Prefer plain, self-maintaining constructs over clever or brittle ones.
+Point tools at a directory rather than a hand-maintained list of files, so new files are covered automatically.
+Use a config's standard keys rather than expression workarounds.
+Write comments that explain durable reasoning, not point-in-time context.
+
+
 ## Design
 
 Vocabulary lives in `CONTEXT.md` and architectural decisions in `docs/adr/`.
