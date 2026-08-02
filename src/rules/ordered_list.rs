@@ -6,9 +6,10 @@ use crate::rule::Rule;
 use crate::text::split_lines;
 use crate::violation::{Span, Violation};
 
-/// Ordered list items are numbered sequentially: `1. 2. 3.`. The list's starting
-/// number is kept, so a list that begins at another number keeps counting from
-/// there. The delimiter (`.` or `)`) is preserved.
+/// Ordered list items use one of two styles: numbered sequentially (`1. 2. 3.`)
+/// or with every marker the same (`1. 1. 1.`). The list's starting number and
+/// delimiter (`.` or `)`) are kept. A list whose numbers vary without being
+/// sequential is renumbered to count up from its first item.
 pub struct OrderedList;
 
 const ID: &str = "ordered-list";
@@ -19,13 +20,17 @@ impl Rule for OrderedList {
     }
 
     fn short_reason(&self) -> &'static str {
-        "Number ordered list items in sequence."
+        "Number ordered items in sequence or all the same."
     }
 
     fn rationale(&self) -> &'static str {
-        "Sequential numbers in the source match what the reader sees rendered, so \
-         the Markdown is easy to follow and reorder. The list keeps whatever number \
-         it starts from and counts up from there."
+        "An ordered list may be numbered two ways. Sequential numbers (`1. 2. 3.`) \
+         match what the reader sees rendered and are easy to follow. Repeating one \
+         number (`1. 1. 1.`) renders identically and keeps diffs small, because \
+         inserting or removing an item never renumbers the rest. Either is fine, so \
+         a list that already uses one is left alone, keeping its starting number and \
+         delimiter. A list whose numbers vary without being sequential is the odd \
+         one out, and it is renumbered to count up from its first item."
     }
 
     fn detect(&self, doc: &Document) -> Vec<Violation> {
@@ -79,29 +84,31 @@ fn rewrite(doc: &Document) -> (Vec<Violation>, String) {
 
 fn collect(node: &Node, lines: &[crate::text::Line<'_>], edits: &mut HashMap<usize, Renumber>) {
     if let NodeKind::List { ordered: true } = node.kind {
-        let items: Vec<&Node> = node
+        let numbered: Vec<(usize, &Node, usize, usize)> = node
             .children
             .iter()
             .filter(|child| child.kind == NodeKind::Item)
+            .enumerate()
+            .filter_map(|(offset, item)| {
+                number_at(lines, item).map(|(value, len)| (offset, item, value, len))
+            })
             .collect();
 
-        if let Some(start) = items
-            .first()
-            .and_then(|item| number_at(lines, item).map(|(value, _)| value))
-        {
-            for (offset, item) in items.iter().enumerate() {
-                if let Some((value, len)) = number_at(lines, item) {
-                    let target = start + offset;
-                    if value != target {
-                        edits.insert(
-                            item.span.start,
-                            Renumber {
-                                digit_start: item.start_column - 1,
-                                old_len: len,
-                                number: target.to_string(),
-                            },
-                        );
-                    }
+        // Both sequential (`1. 2. 3.`) and all-same (`1. 1. 1.`) lists are valid,
+        // so only a list whose numbers vary without being sequential is renumbered.
+        let uniform = numbered.windows(2).all(|pair| pair[0].2 == pair[1].2);
+        if !uniform && let Some(&(_, _, start, _)) = numbered.first() {
+            for &(offset, item, value, len) in &numbered {
+                let target = start + offset;
+                if value != target {
+                    edits.insert(
+                        item.span.start,
+                        Renumber {
+                            digit_start: item.start_column - 1,
+                            old_len: len,
+                            number: target.to_string(),
+                        },
+                    );
                 }
             }
         }
@@ -139,9 +146,23 @@ mod tests {
     }
 
     #[test]
-    fn renumbers_a_lazy_list() {
-        assert_eq!(fix("1. a\n1. b\n1. c\n"), "1. a\n2. b\n3. c\n");
-        assert_eq!(detect("1. a\n1. b\n1. c\n").len(), 2);
+    fn allows_an_all_ones_list() {
+        let source = "1. a\n1. b\n1. c\n";
+        assert_eq!(fix(source), source);
+        assert!(detect(source).is_empty());
+    }
+
+    #[test]
+    fn allows_an_all_same_list_that_does_not_start_at_one() {
+        let source = "2. a\n2. b\n2. c\n";
+        assert_eq!(fix(source), source);
+        assert!(detect(source).is_empty());
+    }
+
+    #[test]
+    fn fixes_a_list_that_varies_without_being_sequential() {
+        assert_eq!(fix("1. a\n1. b\n2. c\n"), "1. a\n2. b\n3. c\n");
+        assert_eq!(detect("1. a\n1. b\n2. c\n").len(), 2);
     }
 
     #[test]
@@ -153,18 +174,18 @@ mod tests {
 
     #[test]
     fn keeps_the_starting_number() {
-        assert_eq!(fix("3. a\n3. b\n"), "3. a\n4. b\n");
+        assert_eq!(fix("3. a\n5. b\n"), "3. a\n4. b\n");
     }
 
     #[test]
     fn preserves_the_delimiter() {
-        assert_eq!(fix("1) a\n1) b\n"), "1) a\n2) b\n");
+        assert_eq!(fix("1) a\n3) b\n"), "1) a\n2) b\n");
     }
 
     #[test]
     fn numbers_nested_lists_independently() {
         assert_eq!(
-            fix("1. a\n   1. x\n   1. y\n1. b\n"),
+            fix("1. a\n   1. x\n   4. y\n4. b\n"),
             "1. a\n   1. x\n   2. y\n2. b\n"
         );
     }
@@ -178,6 +199,6 @@ mod tests {
 
     #[test]
     fn preserves_crlf_line_endings() {
-        assert_eq!(fix("1. a\r\n1. b\r\n"), "1. a\r\n2. b\r\n");
+        assert_eq!(fix("1. a\r\n3. b\r\n"), "1. a\r\n2. b\r\n");
     }
 }

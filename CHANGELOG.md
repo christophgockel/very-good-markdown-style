@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- `ordered-list` now accepts the all-same style (`1. 1. 1.`) as well as sequential numbering, since it renders identically and keeps diffs small.
+  A list whose numbers vary without being sequential is still renumbered to count up from its first item.
+
+
 ### Fixed
 
 - Sentence-per-line no longer merges a sentence into the line above it when the author already broke the line at a sentence end and the next sentence begins with a lowercase word, for example a command or package name.

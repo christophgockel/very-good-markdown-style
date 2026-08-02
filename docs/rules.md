@@ -92,10 +92,13 @@ Wider gaps vary between authors and add nothing, so they are collapsed to one sp
 ## ordered-list
 
 _Fix._
-Number ordered list items in sequence.
+Number ordered items in sequence or all the same.
 
-Sequential numbers in the source match what the reader sees rendered, so the Markdown is easy to follow and reorder.
-The list keeps whatever number it starts from and counts up from there.
+An ordered list may be numbered two ways.
+Sequential numbers (`1. 2. 3.`) match what the reader sees rendered and are easy to follow.
+Repeating one number (`1. 1. 1.`) renders identically and keeps diffs small, because inserting or removing an item never renumbers the rest.
+Either is fine, so a list that already uses one is left alone, keeping its starting number and delimiter.
+A list whose numbers vary without being sequential is the odd one out, and it is renumbered to count up from its first item.
 
 
 ## blockquote-marker

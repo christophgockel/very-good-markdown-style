@@ -115,7 +115,7 @@ Some rules _fix_ what they find, others only _flag_ it, because fixing them woul
 | `code-fence` | fix and flag | Backtick fences, not tildes or indentation. |
 | `list-marker` | fix | `-` for unordered lists. |
 | `list-marker-space` | fix | One space after a list marker. |
-| `ordered-list` | fix | Number ordered items in sequence. |
+| `ordered-list` | fix | Number ordered items in sequence or all the same. |
 | `nested-indent` | fix | Align nested list items with their parent. |
 | `blockquote-marker` | fix | One space after `>`. |
 | `continuation-indent` | flag | Indent continuation lines to reach the text they continue. |
