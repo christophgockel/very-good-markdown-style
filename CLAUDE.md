@@ -25,8 +25,13 @@ The `tests/docs.rs` test fails if it is stale.
 
 ## Dogfooding
 
-The repo's own Markdown must pass the tool.
-After changing the README or docs, run `markdown-style format` on them so they stay conformant.
+All Markdown in the repo must pass the tool, and CI enforces this with `markdown-style lint .`.
+After changing any Markdown, run `markdown-style format .` so it stays conformant.
+
+
+## Changelog
+
+Every user-facing change (a new, changed, or removed rule, or a change to CLI behaviour) gets an entry under `[Unreleased]` in `CHANGELOG.md`, using the Keep a Changelog headings (`Added`, `Changed`, `Fixed`, and so on).
 
 
 ## Design
