@@ -1,0 +1,37 @@
+name: Release
+
+# Manual-only for now, so the build can be verified without tagging. Once the
+# artifacts are confirmed, a `push: tags: ['v*']` trigger and a release-upload
+# step will be added; the build jobs below stay the same.
+on: workflow_dispatch
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-14
+            target: aarch64-apple-darwin
+          - runner: macos-13
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.target }}
+
+      - name: Package
+        run: tar -C target/${{ matrix.target }}/release -czf markdown-style-${{ matrix.target }}.tar.gz markdown-style
+
+      - name: Upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: markdown-style-${{ matrix.target }}
+          path: markdown-style-${{ matrix.target }}.tar.gz
