@@ -109,7 +109,12 @@ fn is_terminator(c: char) -> bool {
 }
 
 fn is_closing(c: char) -> bool {
-    matches!(c, '"' | '\'' | ')' | ']' | '\u{201D}' | '\u{2019}')
+    // Includes `*` and `_` so terminal punctuation inside emphasis, like the
+    // period in `**Done.**`, still ends a sentence.
+    matches!(
+        c,
+        '"' | '\'' | ')' | ']' | '*' | '_' | '\u{201D}' | '\u{2019}'
+    )
 }
 
 fn starts_sentence(c: char) -> bool {
@@ -186,6 +191,18 @@ mod tests {
     #[test]
     fn collapses_extra_spaces_between_sentences() {
         assert_eq!(split_sentences("One.   Two."), vec!["One.", "Two."]);
+    }
+
+    #[test]
+    fn ends_a_sentence_when_the_period_is_inside_emphasis() {
+        assert_eq!(
+            split_sentences("**Bold lead.** Next sentence here."),
+            vec!["**Bold lead.**", "Next sentence here."]
+        );
+        assert_eq!(
+            split_sentences("_Italic lead._ Then more."),
+            vec!["_Italic lead._", "Then more."]
+        );
     }
 
     #[test]

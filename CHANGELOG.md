@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Sentence-per-line no longer joins a bold or italic lead-in into the following sentence when its ending punctuation sits inside the emphasis markers, for example `**Done.**`.
+
+
 ## [0.1.0] - 2026-08-02
 
 ### Added

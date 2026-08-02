@@ -655,4 +655,13 @@ mod tests {
         assert_eq!(fix(source), source);
         assert!(detect(source).is_empty());
     }
+
+    #[test]
+    fn keeps_a_bold_lead_in_on_its_own_line() {
+        // The period sits inside the emphasis, so the lead-in is its own sentence
+        // and must not be joined with the line below.
+        let source = "- **Bold lead.**\n  First point here.\n  Second point here.\n";
+        assert_eq!(fix(source), source);
+        assert!(detect(source).is_empty());
+    }
 }
