@@ -9,6 +9,7 @@ pub mod heading_increment;
 pub mod heading_style;
 pub mod list_marker;
 pub mod list_marker_space;
+pub mod nested_indent;
 pub mod ordered_list;
 pub mod sentence_per_line;
 pub mod single_h1;
