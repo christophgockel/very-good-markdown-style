@@ -86,10 +86,11 @@ fn render_one(
     out.push_str(&format!("{gutter} |\n"));
 
     let source_line = lines.get(span.line - 1).map_or("", |line| line.content);
-    out.push_str(&format!("{} | {source_line}\n", span.line));
+    let (shown, caret_offset, caret_len) = window(source_line, span.column, span.length);
+    out.push_str(&format!("{} | {shown}\n", span.line));
 
-    let caret_pad = " ".repeat(span.column.saturating_sub(1));
-    let carets = "^".repeat(span.length.max(1));
+    let caret_pad = " ".repeat(caret_offset);
+    let carets = "^".repeat(caret_len);
     out.push_str(&format!(
         "{gutter} | {caret_pad}{}\n",
         paint(&carets, RED, color)
@@ -108,6 +109,34 @@ fn render_one(
             out.push_str(&format!("{gutter}{label}{}\n", line.trim()));
         }
     }
+}
+
+/// The most source we show on one line, so a long line and its caret stay
+/// aligned instead of wrapping in the terminal.
+const MAX_WIDTH: usize = 100;
+
+/// Return the source excerpt to show, the caret's offset within it, and the
+/// caret length. Short lines are shown whole; long lines are windowed around the
+/// span with `...` marking each trimmed end.
+fn window(line: &str, column: usize, length: usize) -> (String, usize, usize) {
+    let chars: Vec<char> = line.chars().collect();
+    let span_start = column.saturating_sub(1);
+    if chars.len() <= MAX_WIDTH {
+        return (line.to_string(), span_start, length.max(1));
+    }
+
+    let end = (span_start + MAX_WIDTH - 24).min(chars.len());
+    let start = end.saturating_sub(MAX_WIDTH);
+    let prefix = if start > 0 { "..." } else { "" };
+    let suffix = if end < chars.len() { "..." } else { "" };
+
+    let mut shown = String::from(prefix);
+    shown.extend(&chars[start..end]);
+    shown.push_str(suffix);
+
+    let caret_offset = prefix.len() + (span_start - start);
+    let caret_len = length.max(1).min(end - span_start);
+    (shown, caret_offset, caret_len)
 }
 
 fn paint(text: &str, code: &str, color: bool) -> String {
@@ -158,6 +187,37 @@ mod tests {
         let coloured = render("a.md", source, &detect(source), &default_rules(), true);
         assert!(!plain.contains('\x1b'));
         assert!(coloured.contains('\x1b'));
+    }
+
+    #[test]
+    fn windows_a_long_line_and_keeps_the_caret_aligned() {
+        use crate::violation::Span;
+        let long = format!("{}*x*{}", "a".repeat(200), "b".repeat(200));
+        let violation = Violation {
+            rule_id: "emphasis",
+            message: "m".to_string(),
+            span: Span {
+                line: 1,
+                column: 201,
+                length: 1,
+            },
+        };
+        let report = render(
+            "f.md",
+            &long,
+            std::slice::from_ref(&violation),
+            &default_rules(),
+            false,
+        );
+        let lines: Vec<&str> = report.lines().collect();
+        let source_index = lines.iter().position(|l| l.starts_with("1 | ")).unwrap();
+        let source = lines[source_index];
+        let caret = lines[source_index + 1];
+
+        assert!(source.chars().count() < 120, "line should be windowed");
+        assert!(source.contains("..."));
+        let caret_position = caret.find('^').unwrap();
+        assert_eq!(source.chars().nth(caret_position), Some('*'));
     }
 
     #[test]
