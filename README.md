@@ -13,11 +13,9 @@ You point it at a file, it tells you what is off and why, and it can fix most of
 
 ## Why one sentence per line
 
-Most of the value is here, so let me start with it.
-
 When every sentence begins on its own line, two things get easier.
 Repetition jumps out at you, because near-identical sentences line up in the source.
-Over-long sentences announce themselves, because the line runs long.
+Overlong sentences announce themselves, because the line runs long.
 
 That second point is why the tool has _no_ line-length rule.
 A long line is not a problem to wrap away, it is feedback.
