@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Sentence-per-line no longer merges a sentence that begins with inline code, a link, or an autolink into the preceding sentence.
+
+
 ## [0.2.0] - 2026-08-02
 
 ### Changed

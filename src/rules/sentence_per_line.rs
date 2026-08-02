@@ -657,6 +657,15 @@ mod tests {
     }
 
     #[test]
+    fn keeps_a_sentence_that_starts_with_inline_code_on_its_own_line() {
+        // The second sentence starts with a masked code span; it must not be
+        // merged into the first.
+        let source = "First line here.\n`code` starts the second.\n";
+        assert_eq!(fix(source), source);
+        assert!(detect(source).is_empty());
+    }
+
+    #[test]
     fn keeps_a_bold_lead_in_on_its_own_line() {
         // The period sits inside the emphasis, so the lead-in is its own sentence
         // and must not be joined with the line below.

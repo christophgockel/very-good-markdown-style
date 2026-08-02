@@ -121,6 +121,9 @@ fn starts_sentence(c: char) -> bool {
     c.is_uppercase()
         || c.is_ascii_digit()
         || matches!(c, '"' | '\'' | '(' | '[' | '\u{201C}' | '\u{2018}')
+        // The sentence-per-line rule masks inline code and links with private-use
+        // placeholder characters, so a sentence may begin with one.
+        || ('\u{E000}'..='\u{F8FF}').contains(&c)
 }
 
 #[cfg(test)]
@@ -202,6 +205,16 @@ mod tests {
         assert_eq!(
             split_sentences("_Italic lead._ Then more."),
             vec!["_Italic lead._", "Then more."]
+        );
+    }
+
+    #[test]
+    fn a_masked_placeholder_can_begin_a_sentence() {
+        // Callers mask inline spans with private-use placeholders; a boundary
+        // before one must still be found.
+        assert_eq!(
+            split_sentences("First. \u{E000}0\u{E001} second."),
+            vec!["First.", "\u{E000}0\u{E001} second."]
         );
     }
 
