@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- The `final-newline` rule now allows a single trailing blank line at the end of a file, collapsing only runs of two or more (previously all trailing blank lines were removed).
+
+
 ### Fixed
 
 - Sentence-per-line no longer joins a bold or italic lead-in into the following sentence when its ending punctuation sits inside the emphasis markers, for example `**Done.**`.

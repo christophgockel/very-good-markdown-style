@@ -27,10 +27,10 @@ They are expanded to spaces at four-column tab stops everywhere except inside co
 ## final-newline
 
 _Fix._
-Files should end with exactly one newline.
+End files with a newline and at most one trailing blank line.
 
-A single trailing newline is the POSIX convention: many tools expect it, and its absence shows up as a 'no newline at end of file' marker in diffs.
-Extra blank lines at the end carry no meaning, so the file is trimmed to exactly one final newline.
+A trailing newline is the POSIX convention that many tools expect, and its absence shows up as a 'no newline at end of file' marker in diffs.
+A single blank line at the end is harmless and often left by editors, but more than one is just noise, so extra trailing blank lines are collapsed to one.
 
 
 ## heading-increment

@@ -84,7 +84,7 @@ pub fn rules_catalog() -> String {
         raw.push_str("\n\n");
     }
 
-    crate::format(&raw, &rules)
+    crate::format(raw.trim_end(), &rules)
 }
 
 fn doc_kind(kind: RuleKind) -> &'static str {

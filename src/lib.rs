@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn format_applies_several_fixers_together() {
-        let source = "Title\n=====\n\nHello   world  \n\n\n";
+        let source = "Title\n=====\n\nHello   world  \n";
         assert_eq!(
             format(source, &default_rules()),
             "# Title\n\nHello   world\n"

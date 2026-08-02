@@ -3,10 +3,10 @@ use crate::rule::Rule;
 use crate::text::split_lines;
 use crate::violation::{Span, Violation};
 
-/// A file ends with exactly one line terminator and no trailing blank lines.
-/// The file's existing line-ending style is preserved, and trailing whitespace
-/// on the final content line is left to the trailing-whitespace rule. An empty
-/// file is left empty.
+/// A file ends with a newline and at most one trailing blank line. Two or more
+/// trailing blank lines are collapsed to one. The file's existing line-ending
+/// style is preserved, and trailing whitespace on the final content line is left
+/// to the trailing-whitespace rule. An empty file is left empty.
 pub struct FinalNewline;
 
 const ID: &str = "final-newline";
@@ -17,14 +17,15 @@ impl Rule for FinalNewline {
     }
 
     fn short_reason(&self) -> &'static str {
-        "Files should end with exactly one newline."
+        "End files with a newline and at most one trailing blank line."
     }
 
     fn rationale(&self) -> &'static str {
-        "A single trailing newline is the POSIX convention: many tools expect \
-         it, and its absence shows up as a 'no newline at end of file' marker in \
-         diffs. Extra blank lines at the end carry no meaning, so the file is \
-         trimmed to exactly one final newline."
+        "A trailing newline is the POSIX convention that many tools expect, and \
+         its absence shows up as a 'no newline at end of file' marker in diffs. A \
+         single blank line at the end is harmless and often left by editors, but \
+         more than one is just noise, so extra trailing blank lines are collapsed \
+         to one."
     }
 
     fn detect(&self, doc: &Document) -> Vec<Violation> {
@@ -61,24 +62,35 @@ fn content_lines(source: &str) -> Vec<crate::text::Line<'_>> {
 }
 
 fn fixed_source(source: &str) -> String {
-    let lines = content_lines(source);
-    if lines.is_empty() {
+    let lines = split_lines(source);
+    let trailing_blanks = lines
+        .iter()
+        .rev()
+        .take_while(|line| line.content.trim().is_empty())
+        .count();
+    let content = &lines[..lines.len() - trailing_blanks];
+    if content.is_empty() {
         return String::new();
     }
+
     let convention = if source.contains("\r\n") {
         "\r\n"
     } else {
         "\n"
     };
-    let last = lines.len() - 1;
+    let last = content.len() - 1;
     let mut out = String::with_capacity(source.len());
-    for (i, line) in lines.iter().enumerate() {
+    for (i, line) in content.iter().enumerate() {
         out.push_str(line.content);
         if i == last && line.terminator.is_empty() {
             out.push_str(convention);
         } else {
             out.push_str(line.terminator);
         }
+    }
+    // A single trailing blank line is allowed; anything more collapses to one.
+    if trailing_blanks > 0 {
+        out.push_str(convention);
     }
     out
 }
@@ -128,16 +140,22 @@ mod tests {
     }
 
     #[test]
-    fn collapses_multiple_trailing_newlines() {
-        assert_eq!(fix("foo\n\n\n"), "foo\n");
+    fn collapses_multiple_trailing_blank_lines_to_one() {
+        assert_eq!(fix("foo\n\n\n"), "foo\n\n");
         let violations = detect("foo\n\n\n");
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].message, "file ends with extra blank lines");
     }
 
     #[test]
-    fn removes_a_trailing_whitespace_only_line() {
-        assert_eq!(fix("foo\n   \n"), "foo\n");
+    fn allows_a_single_trailing_blank_line() {
+        assert_eq!(fix("foo\n\n"), "foo\n\n");
+        assert!(detect("foo\n\n").is_empty());
+    }
+
+    #[test]
+    fn cleans_a_trailing_whitespace_only_line_but_keeps_one_blank() {
+        assert_eq!(fix("foo\n   \n"), "foo\n\n");
     }
 
     #[test]
@@ -164,7 +182,7 @@ mod tests {
     }
 
     #[test]
-    fn collapses_trailing_crlf_blank_lines() {
-        assert_eq!(fix("foo\r\n\r\n"), "foo\r\n");
+    fn collapses_trailing_crlf_blank_lines_to_one() {
+        assert_eq!(fix("foo\r\n\r\n\r\n"), "foo\r\n\r\n");
     }
 }

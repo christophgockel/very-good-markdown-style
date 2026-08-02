@@ -55,7 +55,7 @@ fn lint_exits_zero_on_a_clean_file() {
 #[test]
 fn format_rewrites_the_file_in_place() {
     let dir = TempDir::new("format");
-    let file = dir.write("doc.md", "Title\n=====\n\ntext   \n\n\n");
+    let file = dir.write("doc.md", "Title\n=====\n\ntext   \n");
 
     let status = Command::new(BIN).arg("format").arg(&file).status().unwrap();
 
