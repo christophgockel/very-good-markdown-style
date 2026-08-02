@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::ast::{Node, NodeKind};
 use crate::document::Document;
 use crate::rule::Rule;
-use crate::sentence::split_sentences;
+use crate::sentence::{ends_with_sentence_terminator, split_sentences};
 use crate::text::{Line, split_lines};
 use crate::violation::{Span, Violation};
 
@@ -267,20 +267,43 @@ fn produce(stripped: &[&str]) -> Vec<Vec<String>> {
     segment_on_hard_breaks(stripped)
         .iter()
         .map(|segment| {
-            let joined = segment
+            let sentences: Vec<String> = join_groups(segment)
                 .iter()
-                .map(|content| content.trim())
-                .filter(|content| !content.is_empty())
-                .collect::<Vec<_>>()
-                .join(" ");
-            let (masked, protected) = mask(&joined);
-            let sentences: Vec<String> = split_sentences(&masked)
-                .into_iter()
-                .map(|sentence| restore(&sentence, &protected))
-                .filter(|sentence| !sentence.is_empty())
+                .flat_map(|group| sentences_of(group))
                 .collect();
             merge_block_marker_starts(sentences)
         })
+        .collect()
+}
+
+/// Split a segment into groups joined only across soft wraps. A line that ends
+/// with a real sentence terminator ends its group, so an author's explicit break
+/// between sentences is preserved even when the next sentence starts lowercase.
+fn join_groups<'a>(segment: &[&'a str]) -> Vec<Vec<&'a str>> {
+    let mut groups: Vec<Vec<&str>> = vec![Vec::new()];
+    for (index, content) in segment.iter().enumerate() {
+        groups.last_mut().unwrap().push(content);
+        let is_last = index + 1 == segment.len();
+        if !is_last && ends_with_sentence_terminator(content) {
+            groups.push(Vec::new());
+        }
+    }
+    groups
+}
+
+/// Join a group's soft-wrapped lines and split the result into sentences.
+fn sentences_of(group: &[&str]) -> Vec<String> {
+    let joined = group
+        .iter()
+        .map(|content| content.trim())
+        .filter(|content| !content.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
+    let (masked, protected) = mask(&joined);
+    split_sentences(&masked)
+        .into_iter()
+        .map(|sentence| restore(&sentence, &protected))
+        .filter(|sentence| !sentence.is_empty())
         .collect()
 }
 
@@ -663,6 +686,27 @@ mod tests {
         let source = "First line here.\n`code` starts the second.\n";
         assert_eq!(fix(source), source);
         assert!(detect(source).is_empty());
+    }
+
+    #[test]
+    fn keeps_an_author_break_before_a_lowercase_sentence() {
+        // Each line already ends a sentence, so an author's break before a
+        // sentence that starts with a lowercase word must be preserved rather
+        // than merged into the line above.
+        let source =
+            "This tool depends on that one.\nnpm sees it is already present.\nThe rest follows.\n";
+        assert_eq!(fix(source), source);
+        assert!(detect(source).is_empty());
+    }
+
+    #[test]
+    fn still_joins_a_soft_wrap_before_a_lowercase_word() {
+        // The first line does not end a sentence, so it is a soft wrap and the
+        // lines join as before.
+        assert_eq!(
+            fix("this clause keeps\ngoing to the end.\n"),
+            "this clause keeps going to the end.\n"
+        );
     }
 
     #[test]

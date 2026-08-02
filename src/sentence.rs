@@ -14,6 +14,27 @@ const ABBREVIATIONS: &[&str] = &[
     "u.k.", "a.m.", "p.m.",
 ];
 
+/// Whether `text` ends with a terminator a boundary check would honor: a real
+/// `.`/`!`/`?` (past any closing quotes or emphasis markers) whose final word is
+/// not an abbreviation or initial. Lets a caller preserve an author's line break
+/// between sentences even when the next sentence begins with a lowercase word.
+pub fn ends_with_sentence_terminator(text: &str) -> bool {
+    let chars: Vec<char> = text.trim_end().chars().collect();
+    let mut end = chars.len();
+    while end > 0 && is_closing(chars[end - 1]) {
+        end -= 1;
+    }
+    if end == 0 || !is_terminator(chars[end - 1]) {
+        return false;
+    }
+    let mut word_start = end;
+    while word_start > 0 && !chars[word_start - 1].is_whitespace() {
+        word_start -= 1;
+    }
+    let token: String = chars[word_start..end].iter().collect();
+    !is_abbreviation(&token)
+}
+
 /// Split `text` into sentences, each trimmed of surrounding whitespace.
 pub fn split_sentences(text: &str) -> Vec<String> {
     let chars: Vec<char> = text.chars().collect();
@@ -224,5 +245,24 @@ mod tests {
             split_sentences("Version 1.0 works. and more"),
             vec!["Version 1.0 works. and more"]
         );
+    }
+
+    #[test]
+    fn recognises_a_line_that_ends_a_sentence() {
+        assert!(ends_with_sentence_terminator("A short sentence."));
+        assert!(ends_with_sentence_terminator("Is it, though?"));
+        assert!(ends_with_sentence_terminator("He said \"go.\""));
+        assert!(ends_with_sentence_terminator("**Bold lead.**"));
+    }
+
+    #[test]
+    fn does_not_treat_a_soft_wrap_as_a_sentence_end() {
+        assert!(!ends_with_sentence_terminator("this clause keeps going"));
+    }
+
+    #[test]
+    fn does_not_treat_a_trailing_abbreviation_as_a_sentence_end() {
+        assert!(!ends_with_sentence_terminator("foo, bar, etc."));
+        assert!(!ends_with_sentence_terminator("Ask Dr."));
     }
 }

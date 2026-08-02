@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Sentence-per-line no longer merges a sentence into the line above it when the author already broke the line at a sentence end and the next sentence begins with a lowercase word, for example a command or package name.
+
+
 ## [0.3.0] - 2026-08-02
 
 ### Added
