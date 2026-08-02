@@ -24,7 +24,7 @@ impl Rule for BlockquoteMarker {
 
     fn rationale(&self) -> &'static str {
         "A single space after `>` keeps quotes readable in the source and \
-         consistent between authors. Only the marker spacing is changed; deeper \
+         consistent between authors. Only the marker spacing changes. Deeper \
          indentation is content and is left as written."
     }
 
