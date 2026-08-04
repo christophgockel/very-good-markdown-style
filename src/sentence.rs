@@ -108,6 +108,9 @@ fn is_boundary(chars: &[char], term_start: usize, run_end: usize, after: usize) 
 }
 
 fn is_abbreviation(token: &str) -> bool {
+    // Drop any leading punctuation, like an opening paren or quote, so a token
+    // such as "(e.g." is still recognised as the abbreviation "e.g.".
+    let token = token.trim_start_matches(|c: char| !c.is_alphanumeric());
     let lower = token.to_lowercase();
     if ABBREVIATIONS.contains(&lower.as_str()) {
         return true;
@@ -185,6 +188,16 @@ mod tests {
         assert_eq!(
             split_sentences("Ask Dr. Smith now."),
             vec!["Ask Dr. Smith now."]
+        );
+    }
+
+    #[test]
+    fn does_not_split_a_parenthesised_abbreviation() {
+        // The leading "(" must not stop "e.g." from being recognised as an
+        // abbreviation when a capitalised example follows.
+        assert_eq!(
+            split_sentences("Some frameworks (e.g. Foo) work here."),
+            vec!["Some frameworks (e.g. Foo) work here."]
         );
     }
 

@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Sentence-per-line no longer splits after an abbreviation such as `e.g.` when it is preceded by an opening bracket or quote, for example `(e.g. ...)`, and followed by something that starts a sentence.
+
+
 ## [0.4.0] - 2026-08-02
 
 ### Changed

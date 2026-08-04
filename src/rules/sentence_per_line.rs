@@ -710,6 +710,15 @@ mod tests {
     }
 
     #[test]
+    fn keeps_a_parenthesised_abbreviation_before_a_code_span_together() {
+        // "(e.g. `foo`)" must not split before the code span: the abbreviation
+        // guard has to see through the leading paren.
+        let source = "Routes (e.g. `foo`) are matched, so both `a` and `b` work.\n";
+        assert_eq!(fix(source), source);
+        assert!(detect(source).is_empty());
+    }
+
+    #[test]
     fn keeps_a_bold_lead_in_on_its_own_line() {
         // The period sits inside the emphasis, so the lead-in is its own sentence
         // and must not be joined with the line below.
