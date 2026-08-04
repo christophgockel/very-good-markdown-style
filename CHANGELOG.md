@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-04
+
 ### Fixed
 
 - Sentence-per-line no longer splits after an abbreviation such as `e.g.` when it is preceded by an opening bracket or quote, for example `(e.g. ...)`, and followed by something that starts a sentence.
@@ -66,6 +68,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Idempotent formatting, so running `format` twice makes no further changes.
 - `rules --markdown` generates the rule catalogue in `docs/rules.md`, kept current by a test.
 
+[0.4.1]: https://github.com/christophgockel/very-good-markdown-style/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/christophgockel/very-good-markdown-style/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/christophgockel/very-good-markdown-style/compare/0.2.1...0.3.0
 [0.2.1]: https://github.com/christophgockel/very-good-markdown-style/compare/0.2.0...0.2.1
