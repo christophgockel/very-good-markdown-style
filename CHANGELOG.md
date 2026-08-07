@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-07
+
 ### Added
 
 - `lint` takes a `--format` option to choose how diagnostics are rendered.
@@ -75,6 +77,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Idempotent formatting, so running `format` twice makes no further changes.
 - `rules --markdown` generates the rule catalogue in `docs/rules.md`, kept current by a test.
 
+[0.5.0]: https://github.com/christophgockel/very-good-markdown-style/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/christophgockel/very-good-markdown-style/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/christophgockel/very-good-markdown-style/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/christophgockel/very-good-markdown-style/compare/0.2.1...0.3.0
