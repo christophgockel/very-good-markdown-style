@@ -1,3 +1,6 @@
 /target
 .claude/settings.local.json
 
+# The prebuilt binary staged at the repo root for a local `docker build`.
+/markdown-style
+

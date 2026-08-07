@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - A prebuilt Linux binary (`x86_64-unknown-linux-musl`) is now published with each release.
+- A prebuilt Docker image is now published to `ghcr.io/christophgockel/markdown-style` with each release, carrying only the tool so it can run checks in any repository.
 
 
 ## [0.5.0] - 2026-08-07

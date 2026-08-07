@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   build:
@@ -47,3 +48,16 @@ jobs:
         run: |
           shasum -a 256 markdown-style-${{ matrix.target }}.tar.gz
           gh release upload "$TAG" markdown-style-${{ matrix.target }}.tar.gz --clobber
+
+      # Only the Linux binary goes into the image, so only that target publishes.
+      - name: Publish image
+        if: runner.os == 'Linux' && github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          image="ghcr.io/${{ github.repository_owner }}/markdown-style"
+          cp target/${{ matrix.target }}/release/markdown-style .
+          docker build -t "$image:$TAG" -t "$image:latest" .
+          docker push "$image:$TAG"
+          docker push "$image:latest"

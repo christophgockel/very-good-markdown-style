@@ -47,6 +47,13 @@ Or build from source with Cargo:
 cargo install --path .
 ```
 
+Or use the prebuilt image.
+It is built for CI (see [Continuous integration](#continuous-integration)) but also runs directly, linting the mounted directory by default:
+
+```sh
+docker run --rm -v "$PWD:/work" ghcr.io/christophgockel/markdown-style:latest
+```
+
 
 ## Usage
 
@@ -81,11 +88,35 @@ Ask why a rule exists at any time:
 markdown-style explain sentence-per-line
 ```
 
-On GitHub Actions, use `--format github` so each violation annotates the pull request diff inline:
 
-```sh
-markdown-style lint --format github .
+### Continuous integration
+
+The prebuilt image at `ghcr.io/christophgockel/markdown-style` is the simplest way to run the tool in CI: declare it as the job image and call the tool.
+
+On GitLab CI:
+
+```yaml
+lint-markdown:
+  image: ghcr.io/christophgockel/markdown-style:latest
+  script:
+    - markdown-style lint .
 ```
+
+On GitHub Actions, run it after checkout and pass `--format github` so each violation annotates the pull request diff inline:
+
+```yaml
+jobs:
+  markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker://ghcr.io/christophgockel/markdown-style:latest
+        with:
+          args: lint --format github .
+```
+
+A non-zero exit fails the job, so `lint` is your formatting gate.
+To fix rather than check, run `format` instead and commit the result in a follow-up step.
 
 
 ### Exit codes
