@@ -5,7 +5,7 @@ use std::io::{self, IsTerminal, Read};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use ignore::WalkBuilder;
 
 use crate::{Document, default_rules, format, lint, report};
@@ -31,6 +31,9 @@ enum Command {
         /// Files, directories, or `-` for stdin.
         #[arg(required = true)]
         paths: Vec<String>,
+        /// How to render the diagnostics.
+        #[arg(long, value_enum, default_value_t)]
+        format: OutputFormat,
     },
     /// Rewrite files in place to fix violations.
     Format {
@@ -51,17 +54,35 @@ enum Command {
     },
 }
 
+/// The shape of `lint`'s diagnostic output. More formats aimed at CI runners
+/// will join `human` here.
+#[derive(Clone, Copy, Debug, Default, ValueEnum)]
+enum OutputFormat {
+    /// A source snippet with carets, for reading in a terminal.
+    #[default]
+    Human,
+}
+
+impl std::fmt::Display for OutputFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.to_possible_value()
+            .expect("no variant is skipped")
+            .get_name()
+            .fmt(f)
+    }
+}
+
 /// Parse arguments and run. Returns the process exit code.
 pub fn run() -> ExitCode {
     match Cli::parse().command {
-        Command::Lint { paths } => run_lint(&paths),
+        Command::Lint { paths, format } => run_lint(&paths, format),
         Command::Format { paths } => run_format(&paths),
         Command::Explain { rule_id } => run_explain(&rule_id),
         Command::Rules { markdown } => run_rules(markdown),
     }
 }
 
-fn run_lint(paths: &[String]) -> ExitCode {
+fn run_lint(paths: &[String], format: OutputFormat) -> ExitCode {
     let rules = default_rules();
     let color = io::stdout().is_terminal() && std::env::var_os("NO_COLOR").is_none();
 
@@ -74,10 +95,10 @@ fn run_lint(paths: &[String]) -> ExitCode {
         let violations = lint(&Document::new(&source), &rules);
         if !violations.is_empty() {
             any_violations = true;
-            print!(
-                "{}",
-                report::render(&name, &source, &violations, &rules, color)
-            );
+            let rendered = match format {
+                OutputFormat::Human => report::render(&name, &source, &violations, &rules, color),
+            };
+            print!("{rendered}");
         }
     }
 

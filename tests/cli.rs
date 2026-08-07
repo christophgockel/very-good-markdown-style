@@ -43,6 +43,41 @@ fn lint_reports_violations_and_exits_one() {
 }
 
 #[test]
+fn lint_defaults_to_the_human_format() {
+    let dir = TempDir::new("format-default");
+    let file = dir.write("doc.md", "# Title\n\ntext   \n");
+
+    let default = Command::new(BIN).arg("lint").arg(&file).output().unwrap();
+    let explicit = Command::new(BIN)
+        .arg("lint")
+        .arg("--format")
+        .arg("human")
+        .arg(&file)
+        .output()
+        .unwrap();
+
+    assert_eq!(default.status.code(), Some(1));
+    assert_eq!(explicit.status.code(), Some(1));
+    assert_eq!(default.stdout, explicit.stdout);
+}
+
+#[test]
+fn lint_rejects_an_unknown_format() {
+    let dir = TempDir::new("format-unknown");
+    let file = dir.write("doc.md", "text   \n");
+
+    let output = Command::new(BIN)
+        .arg("lint")
+        .arg("--format")
+        .arg("nonsense")
+        .arg(&file)
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(2));
+}
+
+#[test]
 fn lint_exits_zero_on_a_clean_file() {
     let dir = TempDir::new("clean");
     let file = dir.write("doc.md", "# Title\n\nHello world\n");

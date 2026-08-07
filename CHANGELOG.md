@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `lint` takes a `--format` option to choose how diagnostics are rendered.
+  The only value for now is `human`, the default, which is the existing terminal output.
+  More formats aimed at CI runners will follow.
+
+
 ## [0.4.1] - 2026-08-04
 
 ### Fixed
