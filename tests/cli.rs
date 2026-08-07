@@ -62,6 +62,28 @@ fn lint_defaults_to_the_human_format() {
 }
 
 #[test]
+fn lint_github_format_emits_annotations() {
+    let dir = TempDir::new("format-github");
+    let file = dir.write("doc.md", "text   \n");
+
+    let output = Command::new(BIN)
+        .arg("lint")
+        .arg("--format")
+        .arg("github")
+        .arg(&file)
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(1));
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains("::error "), "got:\n{stdout}");
+    assert!(
+        stdout.contains("title=trailing-whitespace"),
+        "got:\n{stdout}"
+    );
+}
+
+#[test]
 fn lint_rejects_an_unknown_format() {
     let dir = TempDir::new("format-unknown");
     let file = dir.write("doc.md", "text   \n");

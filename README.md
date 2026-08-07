@@ -81,6 +81,12 @@ Ask why a rule exists at any time:
 markdown-style explain sentence-per-line
 ```
 
+On GitHub Actions, use `--format github` so each violation annotates the pull request diff inline:
+
+```sh
+markdown-style lint --format github .
+```
+
 
 ### Exit codes
 

@@ -47,6 +47,43 @@ pub fn render(
     out
 }
 
+/// Render violations as GitHub Actions workflow commands, one `::error` per
+/// violation, so a CI run annotates the pull request diff inline. The rule id is
+/// the annotation title and its message is the body.
+pub fn github(path: &str, violations: &[Violation]) -> String {
+    let mut ordered: Vec<&Violation> = violations.iter().collect();
+    ordered.sort_by_key(|violation| (violation.span.line, violation.span.column));
+
+    let mut out = String::new();
+    for violation in ordered {
+        let span = &violation.span;
+        out.push_str(&format!(
+            "::error file={},line={},col={},title={}::{}\n",
+            escape_property(path),
+            span.line,
+            span.column,
+            escape_property(violation.rule_id),
+            escape_data(&violation.message),
+        ));
+    }
+    out
+}
+
+/// Escape a workflow-command message. Percent must be escaped first, so its
+/// replacement's own `%` is not escaped again.
+fn escape_data(value: &str) -> String {
+    value
+        .replace('%', "%25")
+        .replace('\r', "%0D")
+        .replace('\n', "%0A")
+}
+
+/// Escape a workflow-command property value, which additionally may not contain
+/// a literal `:` or `,`.
+fn escape_property(value: &str) -> String {
+    escape_data(value).replace(':', "%3A").replace(',', "%2C")
+}
+
 /// The full rationale for one rule, for the `explain` command. `None` when no
 /// rule owns the id.
 pub fn explain(rule_id: &str, rules: &[Box<dyn Rule>]) -> Option<String> {
@@ -249,6 +286,36 @@ mod tests {
         assert!(source.contains("..."));
         let caret_position = caret.find('^').unwrap();
         assert_eq!(source.chars().nth(caret_position), Some('*'));
+    }
+
+    #[test]
+    fn github_emits_an_error_annotation_per_violation() {
+        let source = "# Title\n\ntext   \n";
+        let out = github("a.md", &detect(source));
+        assert!(
+            out.contains("::error file=a.md,line=3,col=5,title=trailing-whitespace::"),
+            "got:\n{out}"
+        );
+        assert!(out.ends_with('\n'));
+    }
+
+    #[test]
+    fn github_escapes_reserved_characters() {
+        use crate::violation::Span;
+        let violation = Violation {
+            rule_id: "demo",
+            message: "50% off, now\nlater".to_string(),
+            span: Span {
+                line: 2,
+                column: 3,
+                length: 1,
+            },
+        };
+        let out = github("dir,name:1.md", std::slice::from_ref(&violation));
+        // Properties escape the comma and colon; the message escapes the percent
+        // and newline but keeps its comma.
+        assert!(out.contains("file=dir%2Cname%3A1.md"), "got:\n{out}");
+        assert!(out.contains("::50%25 off, now%0Alater\n"), "got:\n{out}");
     }
 
     #[test]

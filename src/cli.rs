@@ -61,6 +61,8 @@ enum OutputFormat {
     /// A source snippet with carets, for reading in a terminal.
     #[default]
     Human,
+    /// GitHub Actions workflow commands that annotate a pull request.
+    Github,
 }
 
 impl std::fmt::Display for OutputFormat {
@@ -97,6 +99,7 @@ fn run_lint(paths: &[String], format: OutputFormat) -> ExitCode {
             any_violations = true;
             let rendered = match format {
                 OutputFormat::Human => report::render(&name, &source, &violations, &rules, color),
+                OutputFormat::Github => report::github(&name, &violations),
             };
             print!("{rendered}");
         }

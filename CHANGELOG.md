@@ -10,8 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `lint` takes a `--format` option to choose how diagnostics are rendered.
-  The only value for now is `human`, the default, which is the existing terminal output.
-  More formats aimed at CI runners will follow.
+  `human`, the default, is the existing terminal output.
+  `github` emits GitHub Actions workflow commands, so a CI run annotates the pull request diff inline.
 
 
 ## [0.4.1] - 2026-08-04
