@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- A prebuilt Linux binary (`x86_64-unknown-linux-musl`) is now published with each release.
+
+
 ## [0.5.0] - 2026-08-07
 
 ### Added

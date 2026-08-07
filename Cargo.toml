@@ -6,6 +6,6 @@ edition = "2024"
 
 [dependencies]
 clap = { version = "4.6.5", features = ["derive"] }
-comrak = "0.54.0"
+comrak = { version = "0.54.0", default-features = false }
 ignore = "0.4.31"
 
