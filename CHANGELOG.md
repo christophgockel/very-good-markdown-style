@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-07
+
 ### Added
 
 - A prebuilt Linux binary (`x86_64-unknown-linux-musl`) is now published with each release.
@@ -83,6 +85,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Idempotent formatting, so running `format` twice makes no further changes.
 - `rules --markdown` generates the rule catalogue in `docs/rules.md`, kept current by a test.
 
+[0.5.1]: https://github.com/christophgockel/very-good-markdown-style/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/christophgockel/very-good-markdown-style/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/christophgockel/very-good-markdown-style/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/christophgockel/very-good-markdown-style/compare/0.3.0...0.4.0
